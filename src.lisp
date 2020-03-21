@@ -229,6 +229,8 @@ pretty efficient.  Returns the shuffled version of the list."
 
 (defparameter *verify* t)
 
+(defparameter *debug* t)
+
 ;;; hmmm, openmcl keeps signalling an error of a different kind
 ;;; when I throw an error -- a bug in openmcl?  dunno...
 (defun throw-error (str)
@@ -353,6 +355,8 @@ pretty efficient.  Returns the shuffled version of the list."
 
 (defun sigmoid (u)
   "Sigmoid function applied to the number u"
+  ;; 1 / (1+ (e^-u))
+	(/ 1 (+ 1 (exp (* -1 u)))))
   )
 
 ;; output and correct-output are both column-vectors
@@ -361,7 +365,16 @@ pretty efficient.  Returns the shuffled version of the list."
 
 (defun net-error (output correct-output)
   "Returns (as a scalar value) the error between the output and correct vectors"
-  )
+  ;; sum of squared differences: (SIGMA((correct-output - output)^2))/2
+  (progn 
+    (let ((error (mapcar #'- correct-output output)))
+		(optionally-print correct-output *debug*)
+		(optionally-print output *debug*)
+		(optionally-print (list error) *debug*)
+		(optionally-print (transpose (list error)) *debug*)
+		(* 1/2 (first (first (multiply (list error) (transpose (list error)))))) ;; probably not the best way to do this lol
+	))
+)
 
 
 ;; a single datum is of the form
