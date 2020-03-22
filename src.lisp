@@ -375,8 +375,7 @@ pretty efficient.  Returns the shuffled version of the list."
   ;; ...of course error would be a 1x1 matrix -- you should be able to extract
   ;; the number out of that.  :-)
 
-  (progn 
-    (let ((err (mapcar #'- correct-output output)))
+  (let ((err (mapcar #'- correct-output output)))
 		(debug-print "correct-output:")
 		(debug-print correct-output)
 		(debug-print "output:")
@@ -388,7 +387,7 @@ pretty efficient.  Returns the shuffled version of the list."
 		(debug-print "(transpose (list err)):")
 		(debug-print (transpose (list err)))
 		(* 1/2 (first (first (multiply (transpose (list err)) (list err))))) ;; can i remove the "list" call here?
-	))
+	)
 )
 
 
@@ -404,14 +403,14 @@ pretty efficient.  Returns the shuffled version of the list."
   "Returns as a vector the output of the OUTPUT units when presented
 the datum as input."
 	(progn 
-		(debug-print "forward propagate:")
-		(debug-print "datum:" datum)	;; input values
-		(debug-print "v:" v)		;; v
-		(debug-print "w:" w)		;; w
+		(optionally-print "forward propagate:" *debug*)
+		(debug-print "datum" datum)
+		(debug-print "v" v)
+		(debug-print "w" w)
 
 		(let ((input (first datum)))			;; get inputs
-			(debug-print "input:" input)	;; input values
-			(prop-layer (prop-layer input v) w)
+			(debug-print "input" input)
+			(debug-print "output" (prop-layer (prop-layer input v) w)) 	;; prints and returns
 		)
 	)
 )
@@ -433,17 +432,17 @@ returning a list consisting of new, modified V and W matrices."
 	;; variables in the context of earlier local variables in the
 	;; same let* statement.
 
-	(debug-print "Back-prop")
+	(optionally-print "Back-prop" *debug*)
   	(let* ((input (first datum))
   		   (output (second datum))
 		   (h (prop-layer input v w)) 	;; do forward prop to intermediate outputs
 		   (o (prop-layer h v w)) 		;; do forward prop to get current outputs
 		   (err ))	
-		(debug-print "input:" input)		;; input values
-		(debug-print "output:" output)	;; output values
-		(debug-print "alpha:" alpha)
-		(debug-print "v: " v)			;; v
-		(debug-print "w: " w)			;; w
+		(debug-print "input" input)
+		(debug-print "output" output)
+		(debug-print "alpha" alpha)
+		(debug-print "v" v)
+		(debug-print "w" w)
 
 		;; deltaW_ij = alpha * (y_i - o_i)*data_i
 
@@ -455,14 +454,10 @@ returning a list consisting of new, modified V and W matrices."
 		(setf w-new (add w (scalar-multiply alpha (multiply odelta (transpose h)))))
 		;; v = v + alpha (hdelta . tr[i]) 	; input = i here
 		(setf v-new (add v (scalar-multiply alpha (multiply hdelta (transpose input)))))
-		(debug-print "odelta:")
-		(debug-print odelta)
-		(debug-print "hdelta:")
-		(debug-print hdelta)
-		(debug-print "w-new:")
-		(debug-print w-new)
-		(debug-print "v-new:")
-		(debug-print v-new)
+		(debug-print "odelta" odelta)
+		(debug-print "hdelta" hdelta)
+		(debug-print "w-new" w-new)
+		(debug-print "v-new" v-new)
 		(list v-new w-new)
   	)
 )
@@ -522,6 +517,39 @@ is met (see below):
 
 The function should return a list of two items: the final V matrix
 and the final W matrix of the learned network."
+	(let* ((input-size (length (first  (first data))))							;; number of inputs
+		   (output-size (length  (second (first data))))						;; number of outputs
+		   (v (make-random-matrix num-hidden-units input-size initial-bounds))	;; input to hidden weights
+		   (w (make-random-matrix output-size num-hidden-units initial-bounds)) ;; hidden to output weights
+		   (max-error 0)	;; to stop early
+		   (sum-error 0)	;; to calculate mean error
+		   (iteration 1))
+		(loop while (and (<= iteration max-iterations) (>  *a-good-minimum-error*  max-error)) do (progn ;; until max-iterations or achieve low enough error
+			(incf iteration)
+			(setf max-error 0)	;; reset error
+			(shuffle data)		;; shuffles data to prevent learning bias
+			;; do back-prop:
+			(loop for data-index from 0 to (- (length data) 1) do (progn 	;; train on data set
+				(let* ((data-element (nth data-index data))					;; get data element
+					   (data-input (first data-element))					;; inputs for this element
+					   (data-output (second data-element))					;; expected output
+					   (updated-network (back-propagate data-element alpha v w)))
+					(setf v (first updated-network))						;; update v
+					(setf w (second updated-network))						;; update w
+				)))
+			(if (zerop (rem iteration modulo))	;; if its a modulo iteration:
+				;; then print forward prop errors
+				(loop for data-index from 0 to (- (length data) 1) do (progn 	;; train on data set
+					(let* ((data-element (nth data-index data))					;; get data element
+						   (outputs (forward-propagate data-element v w))
+						   (err (net-error outputs (second data-element))))
+					)))
+				;; else
+				nil
+			)
+		))
+		(debug-print "net-build network output" (list v w)) 	;; return network
+	)
   )
 
 
@@ -541,6 +569,10 @@ and the final W matrix of the learned network."
 of the data, then tests generalization on the second half, returning
 the average error among the samples in the second half.  Don't print any errors,
 and use a modulo of MAX-ITERATIONS."
+	;; (let ((datum (convert-data data))))
+	;; split data in half (make sure data has the same dimensions its just n/2 samples of the data)
+	;; call net build on the first half
+	;; test on second half
   )
 
 
