@@ -377,16 +377,16 @@ pretty efficient.  Returns the shuffled version of the list."
 
   (progn 
     (let ((err (mapcar #'- correct-output output)))
-		(optionally-print "correct-output:" *debug*)
-		(optionally-print correct-output *debug*)
-		(optionally-print "output:" *debug*)
-		(optionally-print output *debug*)
-		(optionally-print "err:" *debug*)
-		(optionally-print err *debug*)
-		(optionally-print "(list err):" *debug*)
-		(optionally-print (list err) *debug*)
-		(optionally-print "(transpose (list err)):" *debug*)
-		(optionally-print (transpose (list err)) *debug*)
+		(debug-print "correct-output:")
+		(debug-print correct-output)
+		(debug-print "output:")
+		(debug-print output)
+		(debug-print "err:")
+		(debug-print err)
+		(debug-print "(list err):")
+		(debug-print (list err))
+		(debug-print "(transpose (list err)):")
+		(debug-print (transpose (list err)))
 		(* 1/2 (first (first (multiply (transpose (list err)) (list err))))) ;; can i remove the "list" call here?
 	))
 )
@@ -404,18 +404,13 @@ pretty efficient.  Returns the shuffled version of the list."
   "Returns as a vector the output of the OUTPUT units when presented
 the datum as input."
 	(progn 
-		(optionally-print "forward propagate:" *debug*)
-		(optionally-print  "datum: " *debug*)
-		(optionally-print datum *debug*)	;; input values
-		(optionally-print  "v: " *debug*)
-		(optionally-print v *debug*)		;; v left
-		(optionally-print  "w: " *debug*)
-		(optionally-print w *debug*)		;; w left
-		
+		(debug-print "forward propagate:")
+		(debug-print "datum:" datum)	;; input values
+		(debug-print "v:" v)		;; v
+		(debug-print "w:" w)		;; w
 
 		(let ((input (first datum)))			;; get inputs
-			(optionally-print "input:" *debug*)	;; input values
-			(optionally-print input *debug*)	;; input values
+			(debug-print "input:" input)	;; input values
 			(prop-layer (prop-layer input v) w)
 		)
 	)
@@ -433,16 +428,45 @@ the datum as input."
 (defun back-propagate (datum alpha v w)
   "Back-propagates a datum through the V and W matrices,
 returning a list consisting of new, modified V and W matrices."
-  ;; Consider using let*
-  ;; let* is like let, except that it lets you initialize local
-  ;; variables in the context of earlier local variables in the
-  ;; same let* statement.
+	;; Consider using let*
+	;; let* is like let, except that it lets you initialize local
+	;; variables in the context of earlier local variables in the
+	;; same let* statement.
 
-  ;; deltaW_ij = alpha * (y_i - o_i)*data_i
+	(debug-print "Back-prop")
+  	(let* ((input (first datum))
+  		   (output (second datum))
+		   (h (prop-layer input v w)) 	;; do forward prop to intermediate outputs
+		   (o (prop-layer h v w)) 		;; do forward prop to get current outputs
+		   (err ))	
+		(debug-print "input:" input)		;; input values
+		(debug-print "output:" output)	;; output values
+		(debug-print "alpha:" alpha)
+		(debug-print "v: " v)			;; v
+		(debug-print "w: " w)			;; w
 
+		;; deltaW_ij = alpha * (y_i - o_i)*data_i
 
+		;; odelta = (c - o) o (1 - o) 		; output = c here
+		(setf odelta (e-multiply (e-multiply (subtract output o) o) (subtract-from-scalar 1 o)))				;; calculate first error based on current outputs
+		;; hdelta = (h (1 - h) (tr[w] . odelta) )
+		(setf hdelta (e-multiply (e-multiply h (subtract-from-scalar 1 h)) (multiply (transpose W) odelta))) 	;; calculate propogated error based on first error
+		;; w = w + alpha (odelta . tr[h])
+		(setf w-new (add w (scalar-multiply alpha (multiply odelta (transpose h)))))
+		;; v = v + alpha (hdelta . tr[i]) 	; input = i here
+		(setf v-new (add v (scalar-multiply alpha (multiply hdelta (transpose input)))))
+		(debug-print "odelta:")
+		(debug-print odelta)
+		(debug-print "hdelta:")
+		(debug-print hdelta)
+		(debug-print "w-new:")
+		(debug-print w-new)
+		(debug-print "v-new:")
+		(debug-print v-new)
+		(list v w)
+  	)
+)
 
-  )
 
 
 
@@ -452,6 +476,12 @@ returning a list consisting of new, modified V and W matrices."
 In any case, returns x"
   ;;; perhaps this might be a useful function for you
   (if option (print x) x))
+
+(defun debug-print (x y)
+  "If *debug* is t, then prints x and y, else doesn't print it.
+In any case, returns y"
+  ;;; perhaps this might be a useful function for you
+  (if *debug* (format t "~%~a:~%~a" x y) y))
 
 
 (defparameter *a-good-minimum-error* 1.0e-9)
