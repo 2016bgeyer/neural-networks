@@ -450,7 +450,7 @@ returning a list consisting of new, modified V and W matrices."
 		;; odelta = (c - o) o (1 - o) 		; output = c here
 		(setf odelta (e-multiply (e-multiply (subtract output o) o) (subtract-from-scalar 1 o)))				;; calculate first error based on current outputs
 		;; hdelta = (h (1 - h) (tr[w] . odelta) )
-		(setf hdelta (e-multiply (e-multiply h (subtract-from-scalar 1 h)) (multiply (transpose W) odelta))) 	;; calculate propogated error based on first error
+		(setf hdelta (e-multiply (e-multiply h (subtract-from-scalar 1 h)) (multiply (transpose w) odelta))) 	;; calculate propogated error based on first error
 		;; w = w + alpha (odelta . tr[h])
 		(setf w-new (add w (scalar-multiply alpha (multiply odelta (transpose h)))))
 		;; v = v + alpha (hdelta . tr[i]) 	; input = i here
@@ -463,7 +463,7 @@ returning a list consisting of new, modified V and W matrices."
 		(debug-print w-new)
 		(debug-print "v-new:")
 		(debug-print v-new)
-		(list v w)
+		(list v-new w-new)
   	)
 )
 
