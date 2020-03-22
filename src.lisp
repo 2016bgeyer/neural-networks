@@ -366,6 +366,15 @@ pretty efficient.  Returns the shuffled version of the list."
 (defun net-error (output correct-output)
   "Returns (as a scalar value) the error between the output and correct vectors"
   ;; sum of squared differences: (SIGMA((correct-output - output)^2))/2
+  
+  ;; Also for your enlightenment, the error metric ( 1/2 SUM_i (Ci - Oi)^2 )
+  ;; can be matrixified simply as:
+  
+  ;; error =  0.5 ( tr[c - o] . (c - o) )
+  
+  ;; ...of course error would be a 1x1 matrix -- you should be able to extract
+  ;; the number out of that.  :-)
+
   (progn 
     (let ((error (mapcar #'- correct-output output)))
 		(optionally-print correct-output *debug*)
@@ -388,7 +397,40 @@ pretty efficient.  Returns the shuffled version of the list."
 (defun forward-propagate (datum v w)
   "Returns as a vector the output of the OUTPUT units when presented
 the datum as input."
-  )
+	(progn 
+		(optionally-print "forward propagate:" *debug*)
+		(optionally-print  "datum: " *debug*)
+		(optionally-print datum *debug*)	;; input values
+		(optionally-print  "v: " *debug*)
+		(optionally-print v *debug*)		;; v left
+		(optionally-print  "w: " *debug*)
+		(optionally-print w *debug*)		;; w left
+		
+
+		(prop-layer (prop-layer (datum v)) w)
+		;; (let ((layers (list v w))
+		;; 	  (input (convert-data datum)))
+		;; 	(optionally-print "input:" *debug*)	;; input values
+		;; 	(optionally-print input *debug*)	;; input values
+		;; 	(optionally-print "layers:" *debug*)	;; layers left
+		;; 	(optionally-print layers *debug*)	;; layers left
+
+		;; 	(print "pop layers:")
+		;; 	(print (pop layers))
+		;; 	(print "layers:")
+		;; 	(print layers)
+		;; 	(if layers
+		;; 		(list input (forward-propagate (map-m #'sigmoid (multiply w input)) layers)) ;; recursively pop each layer and multiply the layer by input
+		;; 		input ;; base case
+		;; 	)
+		;; )
+	)
+)
+
+(defun prop-layer (input weights)
+	"Does one layer of propogation"
+	(map-m #'sigmoid (multiply weights input))
+)
 
 
 ;; IMPLEMENT THIS FUNCTION
