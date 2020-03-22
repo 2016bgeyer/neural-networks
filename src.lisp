@@ -521,12 +521,13 @@ and the final W matrix of the learned network."
 		   (output-size (length  (second (first data))))						;; number of outputs
 		   (v (make-random-matrix num-hidden-units input-size initial-bounds))	;; input to hidden weights
 		   (w (make-random-matrix output-size num-hidden-units initial-bounds)) ;; hidden to output weights
-		   (max-error 0)	;; to stop early
-		   (sum-error 0)	;; to calculate mean error
+		   (max-error 0)		;; to stop early
+		   (sum-error 0)		;; to calculate mean error
 		   (iteration 1))
 		(loop while (and (<= iteration max-iterations) (>  *a-good-minimum-error*  max-error)) do (progn ;; until max-iterations or achieve low enough error
 			(incf iteration)
 			(setf max-error 0)	;; reset error
+			(setf sum-error 0)	;; reset sum-error for calculating mean error
 			(shuffle data)		;; shuffles data to prevent learning bias
 			;; do back-prop:
 			(loop for data-index from 0 to (- (length data) 1) do (progn 	;; train on data set
@@ -535,19 +536,19 @@ and the final W matrix of the learned network."
 					   (data-output (second data-element))					;; expected output
 					   (updated-network (back-propagate data-element alpha v w)))
 					(setf v (first updated-network))						;; update v
-					(setf w (second updated-network))						;; update w
-				)))
-			(if (zerop (rem iteration modulo))	;; if its a modulo iteration:
+					(setf w (second updated-network)))))					;; update w
+			;; if its a modulo iteration:
+			(if (zerop (rem iteration modulo))
 				;; then print forward prop errors
-				(loop for data-index from 0 to (- (length data) 1) do (progn 	;; train on data set
-					(let* ((data-element (nth data-index data))					;; get data element
-						   (outputs (forward-propagate data-element v w))
-						   (err (net-error outputs (second data-element))))
-					)))
-				;; else
-				nil
-			)
-		))
+				(progn 
+					(loop for data-index from 0 to (- (length data) 1) do (progn 	;; train on data set
+						(let* ((data-element (nth data-index data))					;; get data element
+							(outputs (forward-propagate data-element v w))
+							(err (net-error outputs (second data-element))))		;; get scalar error value
+							(optionally-print err print-all-errors)
+							(setf sum-error (+ sum-error err))						;; update sum-error for mean
+							(if (> err max-error) (setf max-error err))))) 			;; conditionally update max-error
+					(format t "~%Max Error:~a~%Mean Error: ~%~a" max-error (float (/ total-error (length data))))))))
 		(debug-print "net-build network output" (list v w)) 	;; return network
 	)
   )
@@ -569,10 +570,16 @@ and the final W matrix of the learned network."
 of the data, then tests generalization on the second half, returning
 the average error among the samples in the second half.  Don't print any errors,
 and use a modulo of MAX-ITERATIONS."
-	;; (let ((datum (convert-data data))))
+	
 	;; split data in half (make sure data has the same dimensions its just n/2 samples of the data)
-	;; call net build on the first half
-	;; test on second half
+	;; possibly: 
+	(let* ((num-samples (length data))
+		  (converted-data (convert-data))
+		  (training-set (subseq converted-data 0 (- (floor num-samples 2.0) 1)))
+		  (test-set (subseq converted-data (floor num-samples 2.0) (- num-samples 1))))
+		;; net build on training-set
+		;; test on test-set?
+	)
   )
 
 
