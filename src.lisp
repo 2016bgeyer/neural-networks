@@ -376,12 +376,18 @@ pretty efficient.  Returns the shuffled version of the list."
   ;; the number out of that.  :-)
 
   (progn 
-    (let ((error (mapcar #'- correct-output output)))
+    (let ((err (mapcar #'- correct-output output)))
+		(optionally-print "correct-output:" *debug*)
 		(optionally-print correct-output *debug*)
+		(optionally-print "output:" *debug*)
 		(optionally-print output *debug*)
-		(optionally-print (list error) *debug*)
-		(optionally-print (transpose (list error)) *debug*)
-		(* 1/2 (first (first (multiply (list error) (transpose (list error)))))) ;; probably not the best way to do this lol
+		(optionally-print "err:" *debug*)
+		(optionally-print err *debug*)
+		(optionally-print "(list err):" *debug*)
+		(optionally-print (list err) *debug*)
+		(optionally-print "(transpose (list err)):" *debug*)
+		(optionally-print (transpose (list err)) *debug*)
+		(* 1/2 (first (first (multiply (transpose (list err)) (list err))))) ;; can i remove the "list" call here?
 	))
 )
 
@@ -407,28 +413,17 @@ the datum as input."
 		(optionally-print w *debug*)		;; w left
 		
 
-		(prop-layer (prop-layer (datum v)) w)
-		;; (let ((layers (list v w))
-		;; 	  (input (convert-data datum)))
-		;; 	(optionally-print "input:" *debug*)	;; input values
-		;; 	(optionally-print input *debug*)	;; input values
-		;; 	(optionally-print "layers:" *debug*)	;; layers left
-		;; 	(optionally-print layers *debug*)	;; layers left
-
-		;; 	(print "pop layers:")
-		;; 	(print (pop layers))
-		;; 	(print "layers:")
-		;; 	(print layers)
-		;; 	(if layers
-		;; 		(list input (forward-propagate (map-m #'sigmoid (multiply w input)) layers)) ;; recursively pop each layer and multiply the layer by input
-		;; 		input ;; base case
-		;; 	)
-		;; )
+		(let ((input (first datum)))			;; get inputs
+			(optionally-print "input:" *debug*)	;; input values
+			(optionally-print input *debug*)	;; input values
+			(prop-layer (prop-layer input v) w)
+		)
 	)
 )
 
 (defun prop-layer (input weights)
-	"Does one layer of propogation"
+	"Does one layer of propogation by multiplying one layer of edge weights
+	 by the input values with the sigmoid activation function"
 	(map-m #'sigmoid (multiply weights input))
 )
 
@@ -442,6 +437,11 @@ returning a list consisting of new, modified V and W matrices."
   ;; let* is like let, except that it lets you initialize local
   ;; variables in the context of earlier local variables in the
   ;; same let* statement.
+
+  ;; deltaW_ij = alpha * (y_i - o_i)*data_i
+
+
+
   )
 
 
