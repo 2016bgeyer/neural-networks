@@ -356,7 +356,7 @@ pretty efficient.  Returns the shuffled version of the list."
 (defun sigmoid (u)
   "Sigmoid function applied to the number u"
   ;; 1 / (1+ (e^-u))
-	(/ 1 (+ 1 (exp (* -1 u)))))
+	(/ 1 (+ 1 (exp (* -1 u))))
   )
 
 ;; output and correct-output are both column-vectors
@@ -376,16 +376,11 @@ pretty efficient.  Returns the shuffled version of the list."
   ;; the number out of that.  :-)
 
   (let ((err (mapcar #'- correct-output output)))
-		(debug-print "correct-output:")
-		(debug-print correct-output)
-		(debug-print "output:")
-		(debug-print output)
-		(debug-print "err:")
-		(debug-print err)
-		(debug-print "(list err):")
-		(debug-print (list err))
-		(debug-print "(transpose (list err)):")
-		(debug-print (transpose (list err)))
+		(debug-print "correct-output:" correct-output)
+		(debug-print "output:" output)
+		(debug-print "err:" err)
+		(debug-print "(list err):" (list err))
+		(debug-print "(transpose (list err)):" (transpose (list err)))
 		(* 1/2 (first (first (multiply (transpose (list err)) (list err))))) ;; can i remove the "list" call here?
 	)
 )
@@ -435,9 +430,8 @@ returning a list consisting of new, modified V and W matrices."
 	(optionally-print "Back-prop" *debug*)
   	(let* ((input (first datum))
   		   (output (second datum))
-		   (h (prop-layer input v w)) 	;; do forward prop to intermediate outputs
-		   (o (prop-layer h v w)) 		;; do forward prop to get current outputs
-		   (err ))	
+		   (h (prop-layer input v)) 	;; do forward prop to intermediate outputs
+		   (o (prop-layer h w)) 		;; do forward prop to get current outputs)	
 		(debug-print "input" input)
 		(debug-print "output" output)
 		(debug-print "alpha" alpha)
@@ -604,7 +598,7 @@ The average error among all tested samples is returned.  Don't print any errors,
 and use a modulo of MAX-ITERATIONS."
 
 	;; instead of simple-generalization splitting data into 50/50, we split into 
-	;; (k-1)/k : (10-1)/10 for k=10 ; AKA train on 90% and test on 10% 10 times
+	;; (k-1)/k : (10-1)/10 for k=10 ; AKA train on 90% and test on 10%, 10 times
 	
 	;; split data into k equal size chunks and those are your independent test sets.
 	;; for each test-set:
