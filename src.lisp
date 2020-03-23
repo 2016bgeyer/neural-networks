@@ -431,7 +431,9 @@ returning a list consisting of new, modified V and W matrices."
   	(let* ((input (first datum))
   		   (output (second datum))
 		   (h (prop-layer input v)) 	;; do forward prop to intermediate outputs
-		   (o (prop-layer h w)) 		;; do forward prop to get current outputs)	
+		   (o (prop-layer h w)) 		;; do forward prop to get current outputs)
+		   (hdelta)
+		   (odelta))	
 		(debug-print "input" input)
 		(debug-print "output" output)
 		(debug-print "alpha" alpha)
@@ -445,14 +447,14 @@ returning a list consisting of new, modified V and W matrices."
 		;; hdelta = (h (1 - h) (tr[w] . odelta) )
 		(setf hdelta (e-multiply (e-multiply h (subtract-from-scalar 1 h)) (multiply (transpose w) odelta))) 	;; calculate propogated error based on first error
 		;; w = w + alpha (odelta . tr[h])
-		(setf w-new (add w (scalar-multiply alpha (multiply odelta (transpose h)))))
+		(setf w (add w (scalar-multiply alpha (multiply odelta (transpose h)))))
 		;; v = v + alpha (hdelta . tr[i]) 	; input = i here
-		(setf v-new (add v (scalar-multiply alpha (multiply hdelta (transpose input)))))
+		(setf v (add v (scalar-multiply alpha (multiply hdelta (transpose input)))))
 		(debug-print "odelta" odelta)
 		(debug-print "hdelta" hdelta)
-		(debug-print "w-new" w-new)
-		(debug-print "v-new" v-new)
-		(list v-new w-new)
+		(debug-print "w" w)
+		(debug-print "v" v)
+		(list v w)
   	)
 )
 
@@ -526,8 +528,6 @@ and the final W matrix of the learned network."
 			;; do back-prop:
 			(loop for data-index from 0 to (- (length data) 1) do (progn 	;; train on data set
 				(let* ((data-element (nth data-index data))					;; get data element
-					   (data-input (first data-element))					;; inputs for this element
-					   (data-output (second data-element))					;; expected output
 					   (updated-network (back-propagate data-element alpha v w)))
 					(setf v (first updated-network))						;; update v
 					(setf w (second updated-network)))))					;; update w
@@ -542,7 +542,7 @@ and the final W matrix of the learned network."
 							(optionally-print err print-all-errors)
 							(setf sum-error (+ sum-error err))						;; update sum-error for mean
 							(if (> err max-error) (setf max-error err))))) 			;; conditionally update max-error
-					(format t "~%Max Error:~a~%Mean Error: ~%~a" max-error (float (/ total-error (length data))))))))
+					(format t "~%Max Error:~a~%Mean Error: ~%~a" max-error (float (/ sum-error (length data))))))))
 		(debug-print "net-build network output" (list v w)) 	;; return network
 	)
   )
