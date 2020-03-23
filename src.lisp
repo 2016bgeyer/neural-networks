@@ -602,6 +602,15 @@ then testing generalization on the remaining 1/k of the data.  This is
 done k times for different 1/k chunks (and building k different networks).
 The average error among all tested samples is returned.  Don't print any errors,
 and use a modulo of MAX-ITERATIONS."
+
+	;; instead of simple-generalization splitting data into 50/50, we split into 
+	;; (k-1)/k : (10-1)/10 for k=10 ; AKA train on 90% and test on 10% 10 times
+	
+	;; split data into k equal size chunks and those are your independent test sets.
+	;; for each test-set:
+	;;  training-set = data minus test-set
+	;; 	train a network on training-set
+	;; 	test network on test-set
   )
 
 
