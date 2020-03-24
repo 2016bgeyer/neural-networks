@@ -355,8 +355,10 @@ pretty efficient.  Returns the shuffled version of the list."
 
 (defun sigmoid (u)
   "Sigmoid function applied to the number u"
-  ;; 1 / (1+ (e^-u))
-	(/ 1 (+ 1 (exp (* -1 u))))
+    (handler-case										; gracefully handle overflow/underflow/NaN
+	  (/ 1 (+ 1 (exp (* -1 u))))      					; 1 / (1+ (e^-u))
+	    (error (condition)								; catch potential error
+		  (format t "~%Warning, ~a" condition) 0))
   )
 
 ;; output and correct-output are both column-vectors
