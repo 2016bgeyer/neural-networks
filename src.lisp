@@ -377,13 +377,13 @@ pretty efficient.  Returns the shuffled version of the list."
   ;; ...of course error would be a 1x1 matrix -- you should be able to extract
   ;; the number out of that.  :-)
 
-  (let ((err (mapcar #'- correct-output output)))
+  (let ((err (subtract correct-output output)))
 		(debug-print "correct-output:" correct-output)
 		(debug-print "output:" output)
 		(debug-print "err:" err)
 		(debug-print "(list err):" (list err))
 		(debug-print "(transpose (list err)):" (transpose (list err)))
-		(* 1/2 (first (first (multiply (transpose (list err)) (list err))))) ;; can i remove the "list" call here?
+		(* 1/2 (first (first (multiply (transpose err) err))))
 	)
 )
 
