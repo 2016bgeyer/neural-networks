@@ -229,7 +229,7 @@ pretty efficient.  Returns the shuffled version of the list."
 
 (defparameter *verify* t)
 
-(defparameter *debug* t)
+(defparameter *debug* NIL)
 
 ;;; hmmm, openmcl keeps signalling an error of a different kind
 ;;; when I throw an error -- a bug in openmcl?  dunno...
@@ -523,33 +523,35 @@ and the final W matrix of the learned network."
 		   (output-size (length  (second (first data))))						;; number of outputs
 		   (v (make-random-matrix num-hidden-units input-size initial-bounds))	;; input to hidden weights
 		   (w (make-random-matrix output-size num-hidden-units initial-bounds)) ;; hidden to output weights
-		   (max-error 0)		;; to stop early
 		   (sum-error 0)		;; to calculate mean error
-		   (iteration 1))
-		(loop while (and (<= iteration max-iterations) (>  *a-good-minimum-error*  max-error)) do (progn ;; until max-iterations or achieve low enough error
+		   (iteration 1)
+		   max-error
+		   shuffled-data)
+		(loop while (and (<= iteration max-iterations) (or (NULL max-error) (> max-error *a-good-minimum-error*))) do (progn ;; until max-iterations or achieve low enough error
 			(incf iteration)
-			(setf max-error 0)	;; reset error
+			(setf max-error NIL)	;; reset error
 			(setf sum-error 0)	;; reset sum-error for calculating mean error
-			(shuffle data)		;; shuffles data to prevent learning bias
+			(setf shuffled-data (shuffle data))		;; shuffles data to prevent learning bias
 			;; do back-prop:
-			(loop for data-index from 0 to (- (length data) 1) do (progn 	;; train on data set
-				(let* ((data-element (nth data-index data))					;; get data element
-					   (updated-network (back-propagate data-element alpha v w)))
-					(setf v (first updated-network))						;; update v
-					(setf w (second updated-network)))))					;; update w
+			(loop for data-index from 0 to (- (length shuffled-data) 1) do (progn 	;; train on data set
+				(let* ((data-element (nth data-index shuffled-data))					;; get data element
+					   (weights (back-propagate data-element alpha v w)))
+					(setf v (first weights))						;; update v
+					(setf w (second weights)))))					;; update w
 			;; if its a modulo iteration:
 			(if (zerop (rem iteration modulo))
 				;; then print forward prop errors
 				(progn 
-					(loop for data-index from 0 to (- (length data) 1) do (progn 	;; train on data set
-						(let* ((data-element (nth data-index data))					;; get data element
+					(format t "~%------ Iteration ~a ------" iteration)
+					(loop for data-index from 0 to (- (length shuffled-data) 1) do (progn 	;; train on data set
+						(let* ((data-element (nth data-index shuffled-data))					;; get data element
 							(outputs (forward-propagate data-element v w))
 							(err (net-error outputs (second data-element))))		;; get scalar error value
 							(optionally-print err print-all-errors)
 							(setf sum-error (+ sum-error err))						;; update sum-error for mean
-							(if (> err max-error) (setf max-error err))))) 			;; conditionally update max-error
-					(format t "~%Max Error:~a~%Mean Error: ~%~a" max-error (float (/ sum-error (length data))))))))
-		(debug-print "net-build network output" (list v w)) 	;; return network
+							(if (or (NULL max-error) (> err max-error)) (setf max-error err))))) 			;; conditionally update max-error
+					(format t "~%Max Error: ~a~%Mean Error: ~a" max-error (float (/ sum-error (length shuffled-data))))))))
+		(list v w) 	;; return network
 	)
   )
 
