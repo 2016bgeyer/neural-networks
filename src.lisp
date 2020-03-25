@@ -363,8 +363,6 @@ pretty efficient.  Returns the shuffled version of the list."
 
 ;; output and correct-output are both column-vectors
 
-;; IMPLEMENT THIS FUNCTION
-
 (defun net-error (output correct-output)
   "Returns (as a scalar value) the error between the output and correct vectors"
   ;; sum of squared differences: (SIGMA((correct-output - output)^2))/2
@@ -398,7 +396,10 @@ pretty efficient.  Returns the shuffled version of the list."
 
 (defun forward-propagate (datum v w)
   "Returns as a vector the output of the OUTPUT units when presented
-the datum as input."
+the datum as input. The forward pass rules are (in this order):
+
+h = sigmoid[v . i]
+o = sigmoid[w . h]"
 	(progn 
 		(optionally-print "forward propagate:" *debug*)
 		(debug-print "datum" datum)
@@ -407,7 +408,7 @@ the datum as input."
 
 		(let ((input (first datum)))			;; get inputs
 			(debug-print "input" input)
-			(debug-print "output" (prop-layer (prop-layer input v) w)) 	;; prints and returns
+			(prop-layer (prop-layer input v) w) 	;; return the output
 		)
 	)
 )
