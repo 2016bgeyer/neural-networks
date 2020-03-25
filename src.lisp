@@ -424,7 +424,13 @@ o = sigmoid[w . h]"
 
 (defun back-propagate (datum alpha v w)
   "Back-propagates a datum through the V and W matrices,
-returning a list consisting of new, modified V and W matrices."
+returning a list consisting of new, modified V and W matrices.
+The backpropagation rules are (in this order):
+
+odelta = (c - o) o (1 - o)
+hdelta = (h (1 - h) (tr[w] . odelta) )
+w = w + alpha (odelta . tr[h])
+v = v + alpha (hdelta . tr[i])"
 	;; Consider using let*
 	;; let* is like let, except that it lets you initialize local
 	;; variables in the context of earlier local variables in the
@@ -443,8 +449,6 @@ returning a list consisting of new, modified V and W matrices."
 		(debug-print "v" v)
 		(debug-print "w" w)
 
-		;; deltaW_ij = alpha * (y_i - o_i)*data_i
-
 		;; odelta = (c - o) o (1 - o) 		; output = c here
 		(setf odelta (e-multiply (e-multiply (subtract output o) o) (subtract-from-scalar 1 o)))				;; calculate first error based on current outputs
 		;; hdelta = (h (1 - h) (tr[w] . odelta) )
@@ -457,8 +461,7 @@ returning a list consisting of new, modified V and W matrices."
 		(debug-print "hdelta" hdelta)
 		(debug-print "w" w)
 		(debug-print "v" v)
-		(list v w)
-  	)
+		(list v w))
 )
 
 
