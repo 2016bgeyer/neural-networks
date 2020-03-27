@@ -229,7 +229,7 @@ pretty efficient.  Returns the shuffled version of the list."
 
 (defparameter *verify* t)
 
-(defparameter *debug* NIL)
+(defparameter *debug* T)
 
 ;;; hmmm, openmcl keeps signalling an error of a different kind
 ;;; when I throw an error -- a bug in openmcl?  dunno...
@@ -406,17 +406,20 @@ o = sigmoid[w . h]"
 		(debug-print "v" v)
 		(debug-print "w" w)
 
-		(let ((input (first datum)))			;; get inputs
+		(let* ((input-vector (first datum))
+			   (bias (first (first input-vector)))
+			   (input (rest input-vector)))			;; get inputs
 			(debug-print "input" input)
-			(prop-layer (prop-layer input v) w) 	;; return the output
+			(debug-print "bias" bias)
+			(prop-layer (prop-layer input v bias) w) 	;; return the output
 		)
 	)
 )
 
-(defun prop-layer (input weights)
+(defun prop-layer (input weights &optional (bias 0))
 	"Does one layer of propogation by multiplying one layer of edge weights
 	 by the input values with the sigmoid activation function"
-	(map-m #'sigmoid (multiply weights input))
+	(map-m #'sigmoid (scalar-add bias (multiply weights input)))
 )
 
 
