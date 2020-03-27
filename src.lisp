@@ -427,49 +427,37 @@ o = sigmoid[w . h]"
 
 (defun back-propagate (datum alpha v w)
   "Back-propagates a datum through the V and W matrices,
-returning a list consisting of new, modified V and W matrices.
-The backpropagation rules are (in this order):
-
-odelta = (c - o) o (1 - o)
-hdelta = (h (1 - h) (tr[w] . odelta) )
-w = w + alpha (odelta . tr[h])
-v = v + alpha (hdelta . tr[i])"
-	;; Consider using let*
-	;; let* is like let, except that it lets you initialize local
-	;; variables in the context of earlier local variables in the
-	;; same let* statement.
-
+returning a list consisting of new, modified V and W matrices."
 	(optionally-print "Back-prop" *debug*)
-  	(let* ((input (first datum))
-  		   (output (second datum))
-		   (h (prop-layer input v)) 	;; do forward prop to intermediate outputs
-		   (o (prop-layer h w)) 		;; do forward prop to get current outputs)
+  	(let* ((bias-and-input (first datum))
+		   (bias (first (first bias-and-input)))
+		   (i (rest bias-and-input))
+  		   (c (second datum))				;; expected output
+		   (h (prop-layer i v bias)) 	;; do forward prop to hidden layer
+		   (o (prop-layer h w)) 			;; do forward prop to output layer
 		   (hdelta)
 		   (odelta))	
-		(debug-print "input" input)
-		(debug-print "output" output)
+		(debug-print "i" i)
+		(debug-print "c" c)
 		(debug-print "alpha" alpha)
 		(debug-print "v" v)
 		(debug-print "w" w)
 
-		;; odelta = (c - o) o (1 - o) 		; output = c here
-		(setf odelta (e-multiply (e-multiply (subtract output o) o) (subtract-from-scalar 1 o)))				;; calculate first error based on current outputs
+		;; odelta = (c - o) o (1 - o)
+		(setf odelta (e-multiply (e-multiply (subtract c o) o) (subtract-from-scalar 1 o)))
+		(debug-print "odelta" odelta)
 		;; hdelta = (h (1 - h) (tr[w] . odelta) )
-		(setf hdelta (e-multiply (e-multiply h (subtract-from-scalar 1 h)) (multiply (transpose w) odelta))) 	;; calculate propogated error based on first error
+		(setf hdelta (e-multiply (e-multiply h (subtract-from-scalar 1 h)) (multiply (transpose w) odelta)))
+		(debug-print "hdelta" hdelta)
 		;; w = w + alpha (odelta . tr[h])
 		(setf w (add w (scalar-multiply alpha (multiply odelta (transpose h)))))
-		;; v = v + alpha (hdelta . tr[i]) 	; input = i here
-		(setf v (add v (scalar-multiply alpha (multiply hdelta (transpose input)))))
-		(debug-print "odelta" odelta)
-		(debug-print "hdelta" hdelta)
 		(debug-print "w" w)
+		;; v = v + alpha (hdelta . tr[i])
+		(setf v (add v (scalar-multiply alpha (multiply hdelta (transpose i)))))
 		(debug-print "v" v)
-		(list v w))
+		(list v w)
+		)
 )
-
-
-
-
 
 (defun optionally-print (x option)
   "If option is t, then prints x, else doesn't print it.
