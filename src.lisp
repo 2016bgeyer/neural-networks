@@ -406,9 +406,9 @@ o = sigmoid[w . h]"
 		(debug-print "v" v)
 		(debug-print "w" w)
 
-		(let* ((input-vector (first datum))
-			   (bias (first (first input-vector)))
-			   (input (rest input-vector)))			;; get inputs
+		(let* ((bias-and-input (first datum))
+			   (bias (first (first bias-and-input)))
+			   (input (rest bias-and-input)))			;; get inputs
 			(debug-print "input" input)
 			(debug-print "bias" bias)
 			(prop-layer (prop-layer input v bias) w) 	;; return the output
