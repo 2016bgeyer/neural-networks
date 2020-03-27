@@ -229,7 +229,7 @@ pretty efficient.  Returns the shuffled version of the list."
 
 (defparameter *verify* t)
 
-(defparameter *debug* T)
+(defparameter *debug* NIL)
 
 ;;; hmmm, openmcl keeps signalling an error of a different kind
 ;;; when I throw an error -- a bug in openmcl?  dunno...
@@ -510,18 +510,18 @@ is met (see below):
 
 The function should return a list of two items: the final V matrix
 and the final W matrix of the learned network."
-	(let* ((input-size (length (first  (first data))))							;; number of inputs
+	(let* ((input-size (- (length (first  (first data))) 1))					;; number of inputs not including bias
 		   (output-size (length  (second (first data))))						;; number of outputs
 		   (v (make-random-matrix num-hidden-units input-size initial-bounds))	;; input to hidden weights
 		   (w (make-random-matrix output-size num-hidden-units initial-bounds)) ;; hidden to output weights
 		   (sum-error 0)		;; to calculate mean error
-		   (iteration 1)
-		   max-error
-		   shuffled-data)
+		   (iteration 1)		;; track number of iterations
+		   max-error			;; initialize max-error to NULL
+		   shuffled-data)		;; initialize shuffled data to NULL
 		(loop while (and (<= iteration max-iterations) (or (NULL max-error) (> max-error *a-good-minimum-error*))) do (progn ;; until max-iterations or achieve low enough error
 			(incf iteration)
-			(setf max-error NIL)	;; reset error
-			(setf sum-error 0)	;; reset sum-error for calculating mean error
+			(setf max-error NIL)	;; reset error for the new iteration
+			(setf sum-error 0)		;; reset sum-error for new iteration
 			(setf shuffled-data (shuffle data))		;; shuffles data to prevent learning bias
 			;; do back-prop:
 			(loop for data-index from 0 to (- (length shuffled-data) 1) do (progn 	;; train on data set
@@ -565,15 +565,23 @@ the average error among the samples in the second half.  Don't print any errors,
 and use a modulo of MAX-ITERATIONS."
 	
 	;; split data in half (make sure data has the same dimensions its just n/2 samples of the data)
-	;; possibly: 
 	(let* ((num-samples (length data))
-		  (converted-data (convert-data))
-		  (training-set (subseq converted-data 0 (- (floor num-samples 2.0) 1)))
-		  (test-set (subseq converted-data (floor num-samples 2.0) (- num-samples 1))))
-		;; net build on training-set
-		;; test on test-set?
-	)
-  )
+		  (converted-data (convert-data data))
+		  (training-set (subseq converted-data 0 (floor num-samples 2.0)))
+		  (test-set (subseq converted-data (floor num-samples 2.0) num-samples))
+		  (weights (net-build training-set num-hidden-units alpha initial-bounds max-iterations (+ 2 max-iterations) NIL))
+		  (v (first weights))
+		  (w (second weights))
+		  (sum-error 0))
+		(debug-print "v" v)
+		(debug-print "w" w)
+		(loop for data-index from 0 to (- (length test-set) 1) do (progn
+			(let* ((data-element (nth data-index test-set))					;; get data element
+				(outputs (forward-propagate data-element v w))
+				(err (net-error outputs (second data-element))))		;; get scalar error value
+				(setf sum-error (+ sum-error err)))))					;; update sum-error for mean
+		(format t "~%Mean Error: ~a" (float (/ sum-error (length test-set)))))
+)
 
 
 
@@ -604,7 +612,29 @@ and use a modulo of MAX-ITERATIONS."
 	;;  training-set = data minus test-set
 	;; 	train a network on training-set
 	;; 	test network on test-set
-  )
+	(let* ((num-samples (length data))
+		   (converted-data (convert-data data))
+		   (sum-error 0)
+		   (total-tests 0))
+		(dotimes (x k)
+			;(print x)
+			(let* ((test-set-start (* x (floor num-samples k)))
+				   (test-set-end (+ test-set-start (floor num-samples k)))
+				   (test-set (subseq converted-data test-set-start test-set-end))
+				   (train-set (append (subseq converted-data 0 test-set-start) (subseq converted-data test-set-end num-samples)))
+				   (weights (net-build train-set num-hidden-units alpha initial-bounds max-iterations (+ 2 max-iterations) NIL))
+				   (v (first weights))
+				   (w (second weights)))
+				(loop for data-index from 0 to (- (length test-set) 1) do (progn
+					(let* ((data-element (nth data-index test-set))					;; get data element
+					(outputs (forward-propagate data-element v w))
+					(err (net-error outputs (second data-element))))		;; get scalar error value
+					(setf sum-error (+ sum-error err))
+					(incf total-tests))))))					;; update sum-error for mean
+		(let ((mean-error (float (/ sum-error total-tests))))
+			(format t "~%Mean Error: ~a" (float mean-error))
+			mean-error))
+)
 
 
 
