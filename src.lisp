@@ -360,6 +360,11 @@ name)
       (error (condition)								; catch potential error
         (format t "~%Warning, ~a" condition) 0))
  )
+ 
+(defun relu (u)
+  "ReLu function applied to number u"
+  (cond ((<= u 0) 0) (T u))
+)
 
 ;; output and correct-output are both column-vectors
 
