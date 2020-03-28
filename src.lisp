@@ -427,7 +427,7 @@ o = sigmoid[w . h]"
 (defun prop-layer (input weights activation &optional (bias 0))
   "Does one layer of propogation by multiplying one layer of edge weights
   by the input values with the sigmoid activation function"
-  (map-m *activation-function* (scalar-add bias (multiply weights input))) ;; after the multiplication, add the bias and run sigmoid
+  (map-m activation-function (scalar-add bias (multiply weights input))) ;; after the multiplication, add the bias and run sigmoid
 )
 
 ;; IMPLEMENT THIS FUNCTION
