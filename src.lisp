@@ -419,13 +419,15 @@ o = sigmoid[w . h]"
              (input (rest bias-and-input)))			;; input vector only (without bias)
         (debug-print "input" input)
         (debug-print "bias" bias)
-        (prop-layer (prop-layer input v bias) w))) 	;; propagate the two layers i -> h -> o
+        (prop-layer *output-activation* (prop-layer *hidden-activation* input v bias) w))) 	;; propagate the two layers i -> h -> o
 )
 
-(defun prop-layer (input weights &optional (bias 0))
+(defparameter *output-activation* #'sigmoid)
+(defparameter *hidden-activation* #'relu)
+(defun prop-layer (activation-function input weights &optional (bias 0))
   "Does one layer of propogation by multiplying one layer of edge weights
   by the input values with the sigmoid activation function"
-  (map-m #'sigmoid (scalar-add bias (multiply weights input))) ;; after the multiplication, add the bias and run sigmoid
+  (map-m activation-function (scalar-add bias (multiply weights input))) ;; after the multiplication, add the bias and run sigmoid
 )
 
 
@@ -439,8 +441,8 @@ o = sigmoid[w . h]"
          (bias (first (first bias-and-input)))	;; convert-data adds a bias as the first element
          (i (rest bias-and-input))				;; input vector only (without bias)
          (c (second datum))						;; expected output
-         (h (prop-layer i v bias)) 				;; do forward prop to hidden layer
-         (o (prop-layer h w)) 					;; do forward prop to output layer
+         (h (prop-layer *hidden-activation* i v bias)) 				;; do forward prop to hidden layer
+         (o (prop-layer *output-activation* h w)) 					;; do forward prop to output layer
          (hdelta)									;; initialize hdelta
          (odelta))								;; initialize odelta
     (debug-print "i" i)
