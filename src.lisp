@@ -350,10 +350,10 @@ pretty efficient.  Returns the shuffled version of the list."
 
 (defun sigmoid (u)
   "Sigmoid function applied to the number u"
-    (handler-case										; gracefully handle overflow/underflow/NaN
-	  (/ 1 (+ 1 (exp (* -1 u))))      					; 1 / (1+ (e^-u))
-	    (error (condition)								; catch potential error
-		  (format t "~%Warning, ~a" condition) 0))
+  (handler-case										; gracefully handle overflow/underflow/NaN
+    (/ 1 (+ 1 (exp (* -1 u))))      					; 1 / (1+ (e^-u))
+      (error (condition)								; catch potential error
+        (format t "~%Warning, ~a" condition) 0))
  )
 
 ;; output and correct-output are both column-vectors
@@ -371,13 +371,12 @@ pretty efficient.  Returns the shuffled version of the list."
   ;; the number out of that.  :-)
 
   (let ((err (subtract correct-output output)))
-		(debug-print "correct-output:" correct-output)
-		(debug-print "output:" output)
-		(debug-print "err:" err)
-		(debug-print "(list err):" (list err))
-		(debug-print "(transpose (list err)):" (transpose (list err)))
-		(* 1/2 (first (first (multiply (transpose err) err)))) ; error =  0.5 ( tr[c - o] . (c - o) )
-	)
+        (debug-print "correct-output:" correct-output)
+        (debug-print "output:" output)
+        (debug-print "err:" err)
+        (debug-print "(list err):" (list err))
+        (debug-print "(transpose (list err)):" (transpose (list err)))
+    (* 1/2 (first (first (multiply (transpose err) err))))) ; error =  0.5 ( tr[c - o] . (c - o) )
 )
 
 
@@ -395,26 +394,23 @@ the datum as input. The forward pass rules are (in this order):
 
 h = sigmoid[v . i]
 o = sigmoid[w . h]"
-	(progn 
-		(optionally-print "forward propagate:" *debug*)
-		(debug-print "datum" datum)
-		(debug-print "v" v)
-		(debug-print "w" w)
-
-		(let* ((bias-and-input (first datum))			;; bias and input vector
-			   (bias (first (first bias-and-input)))	;; convert-data adds a bias as the first element
-			   (input (rest bias-and-input)))			;; input vector only (without bias)
-			(debug-print "input" input)
-			(debug-print "bias" bias)
-			(prop-layer (prop-layer input v bias) w) 	;; propagate the two layers i -> h -> o
-		)
-	)
+  (progn 
+    (optionally-print "forward propagate:" *debug*)
+    (debug-print "datum" datum)
+    (debug-print "v" v)
+    (debug-print "w" w)
+      (let* ((bias-and-input (first datum))			;; bias and input vector
+             (bias (first (first bias-and-input)))	;; convert-data adds a bias as the first element
+             (input (rest bias-and-input)))			;; input vector only (without bias)
+        (debug-print "input" input)
+        (debug-print "bias" bias)
+        (prop-layer (prop-layer input v bias) w))) 	;; propagate the two layers i -> h -> o
 )
 
 (defun prop-layer (input weights &optional (bias 0))
-	"Does one layer of propogation by multiplying one layer of edge weights
-	 by the input values with the sigmoid activation function"
-	(map-m #'sigmoid (scalar-add bias (multiply weights input))) ;; after the multiplication, add the bias and run sigmoid
+  "Does one layer of propogation by multiplying one layer of edge weights
+  by the input values with the sigmoid activation function"
+  (map-m #'sigmoid (scalar-add bias (multiply weights input))) ;; after the multiplication, add the bias and run sigmoid
 )
 
 
@@ -422,36 +418,35 @@ o = sigmoid[w . h]"
 
 (defun back-propagate (datum alpha v w)
   "Back-propagates a datum through the V and W matrices,
-returning a list consisting of new, modified V and W matrices."
-	(optionally-print "Back-prop" *debug*)
-  	(let* ((bias-and-input (first datum))			;; vector containing both bias and input vector
-		   (bias (first (first bias-and-input)))	;; convert-data adds a bias as the first element
-		   (i (rest bias-and-input))				;; input vector only (without bias)
-  		   (c (second datum))						;; expected output
-		   (h (prop-layer i v bias)) 				;; do forward prop to hidden layer
-		   (o (prop-layer h w)) 					;; do forward prop to output layer
-		   (hdelta)									;; initialize hdelta
-		   (odelta))								;; initialize odelta
-		(debug-print "i" i)
-		(debug-print "c" c)
-		(debug-print "alpha" alpha)
-		(debug-print "v" v)
-		(debug-print "w" w)
+  returning a list consisting of new, modified V and W matrices."
+  (optionally-print "Back-prop" *debug*)
+  (let* ((bias-and-input (first datum))			;; vector containing both bias and input vector
+         (bias (first (first bias-and-input)))	;; convert-data adds a bias as the first element
+         (i (rest bias-and-input))				;; input vector only (without bias)
+         (c (second datum))						;; expected output
+         (h (prop-layer i v bias)) 				;; do forward prop to hidden layer
+         (o (prop-layer h w)) 					;; do forward prop to output layer
+         (hdelta)									;; initialize hdelta
+         (odelta))								;; initialize odelta
+    (debug-print "i" i)
+    (debug-print "c" c)
+    (debug-print "alpha" alpha)
+    (debug-print "v" v)
+    (debug-print "w" w)
 
-		;; odelta = (c - o) o (1 - o)
-		(setf odelta (e-multiply (e-multiply (subtract c o) o) (subtract-from-scalar 1 o)))
-		(debug-print "odelta" odelta)
-		;; hdelta = (h (1 - h) (tr[w] . odelta) )
-		(setf hdelta (e-multiply (e-multiply h (subtract-from-scalar 1 h)) (multiply (transpose w) odelta)))
-		(debug-print "hdelta" hdelta)
-		;; w = w + alpha (odelta . tr[h])
-		(setf w (add w (scalar-multiply alpha (multiply odelta (transpose h)))))
-		(debug-print "w" w)
-		;; v = v + alpha (hdelta . tr[i])
-		(setf v (add v (scalar-multiply alpha (multiply hdelta (transpose i)))))
-		(debug-print "v" v)
-		(list v w)
-		)
+    ;; odelta = (c - o) o (1 - o)
+    (setf odelta (e-multiply (e-multiply (subtract c o) o) (subtract-from-scalar 1 o)))
+    (debug-print "odelta" odelta)
+    ;; hdelta = (h (1 - h) (tr[w] . odelta) )
+    (setf hdelta (e-multiply (e-multiply h (subtract-from-scalar 1 h)) (multiply (transpose w) odelta)))
+    (debug-print "hdelta" hdelta)
+    ;; w = w + alpha (odelta . tr[h])
+    (setf w (add w (scalar-multiply alpha (multiply odelta (transpose h)))))
+    (debug-print "w" w)
+    ;; v = v + alpha (hdelta . tr[i])
+    (setf v (add v (scalar-multiply alpha (multiply hdelta (transpose i)))))
+    (debug-print "v" v)
+    (list v w))
 )
 
 (defun optionally-print (x option)
@@ -505,40 +500,40 @@ is met (see below):
 
 The function should return a list of two items: the final V matrix
 and the final W matrix of the learned network."
-	(let* ((input-size (- (length (first  (first data))) 1))					;; number of inputs not including bias
-		   (output-size (length  (second (first data))))						;; number of outputs
-		   (v (make-random-matrix num-hidden-units input-size initial-bounds))	;; input to hidden weights
-		   (w (make-random-matrix output-size num-hidden-units initial-bounds)) ;; hidden to output weights
-		   (sum-error 0)														;; to calculate mean error
-		   (iteration 1)														;; track number of iterations
-		   max-error															;; initialize max-error to NULL
-		   shuffled-data)														;; initialize shuffled data to NULL
-		(loop while (and (<= iteration max-iterations) (or (NULL max-error) (> max-error *a-good-minimum-error*))) do (progn
-		;; until max-iterations or achieve low enough error
-			(incf iteration)						;; increment the iteration count
-			(setf max-error NIL)					;; reset error for the new iteration
-			(setf sum-error 0)						;; reset sum-error for new iteration
-			(setf shuffled-data (shuffle data))		;; shuffles data to prevent learning bias
-			;; do back-prop:
-			(loop for data-index from 0 to (- (length shuffled-data) 1) do (progn 	;; train on data set
-				(let* ((data-element (nth data-index shuffled-data))				;; get data element
-					   (weights (back-propagate data-element alpha v w)))			;; weights containing v and w
-					(setf v (first weights))										;; update v
-					(setf w (second weights)))))									;; update w
-			;; if its a modulo iteration:
-			(if (zerop (rem iteration modulo))
-				;; then print forward prop errors
-				(progn 
-					(format t "~%------ Iteration ~a ------" iteration)
-					(loop for data-index from 0 to (- (length shuffled-data) 1) do (progn 	;; test on data set
-						(let* ((data-element (nth data-index shuffled-data))				;; get data element
-							(outputs (forward-propagate data-element v w))					;; propagate and get output vector
-							(err (net-error outputs (second data-element))))				;; get scalar error value
-							(optionally-print err print-all-errors)
-							(setf sum-error (+ sum-error err))								;; update sum-error for mean
-							(if (or (NULL max-error) (> err max-error)) (setf max-error err))))) ;; conditionally update max-error
-					(format t "~%Max Error: ~a~%Mean Error: ~a" max-error (float (/ sum-error (length shuffled-data))))))))
-		(list v w)) 	;; return network
+  (let* ((input-size (- (length (first  (first data))) 1))					;; number of inputs not including bias
+         (output-size (length  (second (first data))))						;; number of outputs
+         (v (make-random-matrix num-hidden-units input-size initial-bounds))	;; input to hidden weights
+         (w (make-random-matrix output-size num-hidden-units initial-bounds)) ;; hidden to output weights
+         (sum-error 0)														;; to calculate mean error
+         (iteration 1)														;; track number of iterations
+         max-error															;; initialize max-error to NULL
+         shuffled-data)														;; initialize shuffled data to NULL
+    (loop while (and (<= iteration max-iterations) (or (NULL max-error) (> max-error *a-good-minimum-error*))) do (progn
+      ;; until max-iterations or achieve low enough error
+      (incf iteration)						;; increment the iteration count
+      (setf max-error NIL)					;; reset error for the new iteration
+      (setf sum-error 0)						;; reset sum-error for new iteration
+      (setf shuffled-data (shuffle data))		;; shuffles data to prevent learning bias
+      ;; do back-prop:
+      (loop for data-index from 0 to (- (length shuffled-data) 1) do (progn 	;; train on data set
+        (let* ((data-element (nth data-index shuffled-data))				;; get data element
+               (weights (back-propagate data-element alpha v w)))			;; weights containing v and w
+          (setf v (first weights))										;; update v
+          (setf w (second weights)))))									;; update w
+          ;; if its a modulo iteration:
+      (if (zerop (rem iteration modulo))
+      ;; then print forward prop errors
+        (progn 
+          (format t "~%------ Iteration ~a ------" iteration)
+            (loop for data-index from 0 to (- (length shuffled-data) 1) do (progn 	;; test on data set
+                (let* ((data-element (nth data-index shuffled-data))				;; get data element
+                       (outputs (forward-propagate data-element v w))					;; propagate and get output vector
+                       (err (net-error outputs (second data-element))))				;; get scalar error value
+                  (optionally-print err print-all-errors)
+                  (setf sum-error (+ sum-error err))								;; update sum-error for mean
+                  (if (or (NULL max-error) (> err max-error)) (setf max-error err))))) ;; conditionally update max-error
+            (format t "~%Max Error: ~a~%Mean Error: ~a" max-error (float (/ sum-error (length shuffled-data))))))))
+    (list v w)) 	;; return network
 )
 
 
@@ -559,23 +554,23 @@ of the data, then tests generalization on the second half, returning
 the average error among the samples in the second half.  Don't print any errors,
 and use a modulo of MAX-ITERATIONS."
 	
-	;; split data in half (make sure data has the same dimensions its just n/2 samples of the data)
-	(let* ((num-samples (length data))
-		  (converted-data (convert-data data))		;; convert the data to correct format + bias
-		  (training-set (subseq converted-data 0 (floor num-samples 2.0)))	;; first half is training set
-		  (test-set (subseq converted-data (floor num-samples 2.0) num-samples)) ;; second half is testing set
-		  (weights (net-build training-set num-hidden-units alpha initial-bounds max-iterations (+ 2 max-iterations) NIL))
-		  (v (first weights))	;; extract v from weights
-		  (w (second weights))	;; extract w from weights
-		  (sum-error 0))		;; initialize sum-error for mean error
-		(debug-print "v" v)
-		(debug-print "w" w)
-		(loop for data-index from 0 to (- (length test-set) 1) do (progn	;; go through testing set elements
-			(let* ((data-element (nth data-index test-set))					;; get data element
-				(outputs (forward-propagate data-element v w))				;; run forward-propagate
-				(err (net-error outputs (second data-element))))			;; get scalar error value
-				(setf sum-error (+ sum-error err)))))						;; update sum-error for mean
-		(format t "~%Mean Error: ~a" (float (/ sum-error (length test-set)))))	;; calculate mean error
+  ;; split data in half (make sure data has the same dimensions its just n/2 samples of the data)
+  (let* ((num-samples (length data))
+         (converted-data (convert-data data))		;; convert the data to correct format + bias
+         (training-set (subseq converted-data 0 (floor num-samples 2.0)))	;; first half is training set
+         (test-set (subseq converted-data (floor num-samples 2.0) num-samples)) ;; second half is testing set
+         (weights (net-build training-set num-hidden-units alpha initial-bounds max-iterations (+ 2 max-iterations) NIL))
+         (v (first weights))	;; extract v from weights
+         (w (second weights))	;; extract w from weights
+         (sum-error 0))		;; initialize sum-error for mean error
+    (debug-print "v" v)
+    (debug-print "w" w)
+    (loop for data-index from 0 to (- (length test-set) 1) do (progn	;; go through testing set elements
+      (let* ((data-element (nth data-index test-set))					;; get data element
+             (outputs (forward-propagate data-element v w))				;; run forward-propagate
+             (err (net-error outputs (second data-element))))			;; get scalar error value
+        (setf sum-error (+ sum-error err)))))						;; update sum-error for mean
+    (format t "~%Mean Error: ~a" (float (/ sum-error (length test-set)))))	;; calculate mean error
 )
 
 
@@ -599,39 +594,39 @@ done k times for different 1/k chunks (and building k different networks).
 The average error among all tested samples is returned.  Don't print any errors,
 and use a modulo of MAX-ITERATIONS."
 
-	;; instead of simple-generalization splitting data into 50/50, we split into 
-	;; (k-1)/k : (10-1)/10 for k=10 ; AKA train on 90% and test on 10%, 10 times
+  ;; instead of simple-generalization splitting data into 50/50, we split into 
+  ;; (k-1)/k : (10-1)/10 for k=10 ; AKA train on 90% and test on 10%, 10 times
 	
-	;; split data into k equal size chunks and those are your independent test sets.
-	;; for each test-set:
-	;;  training-set = data minus test-set
-	;; 	train a network on training-set
-	;; 	test network on test-set
-	(let* ((num-samples (length data))				;; total number of samples
-		   (converted-data (convert-data data))		;; convert the data to correct format + bias
-		   (sum-error 0)							;; initialize sum-error
-		   (total-tests 0))							;; initialize total number of tests
-		(dotimes (x k)								;; loop k times
-			(let* ((test-set-start (* x (floor num-samples k)))				;; index for beginning of test set
-				   (test-set-end (+ test-set-start (floor num-samples k)))	;; index for end of test set
-				   (test-set (subseq converted-data test-set-start test-set-end))	;; create test set using indices
-				   ;; training set is the whole data set without the test-set
-				   (train-set (append (subseq converted-data 0 test-set-start) (subseq converted-data test-set-end num-samples)))
-				   ;; run training set through net-build to let network learn the weights
-				   (weights (net-build train-set num-hidden-units alpha initial-bounds max-iterations (+ 2 max-iterations) NIL))
-				   ;; extract v from weights
-				   (v (first weights))
-				   ;; extract w from weights
-				   (w (second weights)))
-				(loop for data-index from 0 to (- (length test-set) 1) do (progn	;; iterate through testing set
-					(let* ((data-element (nth data-index test-set))					;; get data element
-					(outputs (forward-propagate data-element v w))					;; run forward prop to get output vector
-					(err (net-error outputs (second data-element))))				;; get scalar error value
-					(setf sum-error (+ sum-error err))								;; increment the sum-error
-					(incf total-tests))))))											;; increment total tests
-		(let ((mean-error (float (/ sum-error total-tests))))						;; calculate mean-error and print it
-			(format t "~%Mean Error: ~a" (float mean-error))
-			mean-error))
+  ;; split data into k equal size chunks and those are your independent test sets.
+  ;; for each test-set:
+  ;;  training-set = data minus test-set
+  ;; 	train a network on training-set
+  ;; 	test network on test-set
+  (let* ((num-samples (length data))				;; total number of samples
+         (converted-data (convert-data data))		;; convert the data to correct format + bias
+         (sum-error 0)							;; initialize sum-error
+         (total-tests 0))							;; initialize total number of tests
+    (dotimes (x k)								;; loop k times
+      (let* ((test-set-start (* x (floor num-samples k)))				;; index for beginning of test set
+             (test-set-end (+ test-set-start (floor num-samples k)))	;; index for end of test set
+             (test-set (subseq converted-data test-set-start test-set-end))	;; create test set using indices
+             ;; training set is the whole data set without the test-set
+             (train-set (append (subseq converted-data 0 test-set-start) (subseq converted-data test-set-end num-samples)))
+             ;; run training set through net-build to let network learn the weights
+             (weights (net-build train-set num-hidden-units alpha initial-bounds max-iterations (+ 2 max-iterations) NIL))
+             ;; extract v from weights
+             (v (first weights))
+             ;; extract w from weights
+             (w (second weights)))
+        (loop for data-index from 0 to (- (length test-set) 1) do (progn	;; iterate through testing set
+          (let* ((data-element (nth data-index test-set))					;; get data element
+                 (outputs (forward-propagate data-element v w))					;; run forward prop to get output vector
+                 (err (net-error outputs (second data-element))))				;; get scalar error value
+            (setf sum-error (+ sum-error err))								;; increment the sum-error
+            (incf total-tests))))))											;; increment total tests
+    (let ((mean-error (float (/ sum-error total-tests))))						;; calculate mean-error and print it
+      (format t "~%Mean Error: ~a" (float mean-error))
+      mean-error))
 )
 
 ;;;; Some useful preprocessing functions
