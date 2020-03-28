@@ -403,7 +403,7 @@ name)
 
 ;; IMPLEMENT THIS FUNCTION
 (defparameter *output-activation* #'sigmoid)
-(defparameter *hidden-activation* #'relu)
+(defparameter *hidden-activation* #'sigmoid)
 
 (defun prop-layer (activation-function input weights &optional (bias 0))
   "Does one layer of propogation by multiplying one layer of edge weights
@@ -587,6 +587,7 @@ and use a modulo of MAX-ITERATIONS."
       (let* ((data-element (nth data-index test-set))					;; get data element
              (outputs (forward-propagate data-element v w))				;; run forward-propagate
              (err (net-error outputs (second data-element))))			;; get scalar error value
+			 ;(writeToFile "output.csv" err)
         (setf sum-error (+ sum-error err)))))						;; update sum-error for mean
     (format t "~%Mean Error: ~a" (float (/ sum-error (length test-set)))))	;; calculate mean error
 )
@@ -1809,12 +1810,12 @@ can be fed into NET-LEARN.  Also adds a bias unit of 0.5 to the input."
 
 
 ;;; how well does this generalize usually?  Can you modify it to typically generalize better?
-(simple-generalization *voting-records* ...)  ;; pick appropriate values
+(simple-generalization *voting-records* 15 1.0 5 5000))
 
 ;;; how well does this generalize usually?  Can you modify it to typically generalize better?
-(simple-generalization *mpg* ...) ;; pick appropriate values
+(simple-generalization (scale-data *mpg*) 15 1.0 5 5000))
 
 ;;; how well does this generalize usually?  Can you modify it to typically generalize better?
-(simple-generalization *wine* ...)  ;; pick appropriate values
+(simple-generalization (scale-data *wine*) 15 1.0 5 5000))
 
 |#
