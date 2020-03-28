@@ -347,7 +347,7 @@ pretty efficient.  Returns the shuffled version of the list."
 ;; function used for testing to create csv files
 (defun writeToFile (name content)
   (with-open-file (stream  name :direction :output :if-exists :append :if-does-not-exist :create )
-  (format stream "~a~%" content))
+  (format stream "~a, " content))
 name)
 ;;; Functions you need to implement
 
@@ -404,7 +404,7 @@ name)
 ;; IMPLEMENT THIS FUNCTION
 
 (defparameter *output-activation* #'sigmoid)
-(defparameter *hidden-activation* #'relu)
+(defparameter *hidden-activation* #'sigmoid)
 (defparameter *run-num* 1)
 (defparameter *run-var* 0)
 
@@ -553,16 +553,9 @@ and the final W matrix of the learned network."
                 (optionally-print err print-all-errors)
                 (setf sum-error (+ sum-error err))								;; update sum-error for mean
                 (if (or (NULL max-error) (> err max-error)) (setf max-error err))))) ;; conditionally update max-error
-          (writeToFile  ; only used for testing purposes
-            (format nil "max~a-~a.csv" 
-              *run-var*
-              *run-num*) 
-            (write-to-string max-error))
           (setf mean-error (float (/ sum-error (length shuffled-data))))
           (writeToFile  ; only used for testing purposes
-            (format nil "mean~a-~a.csv" 
-              *run-var*
-              *run-num*) 
+            (format nil "output.csv")
             (write-to-string mean-error))
           (format t "~%Max Error: ~a~%Mean Error: ~a" max-error mean-error)))))
     (list v w)) 	;; return network
@@ -1834,13 +1827,16 @@ can be fed into NET-LEARN.  Also adds a bias unit of 0.5 to the input."
 (simple-generalization *wine* ...)  ;; pick appropriate values
 
 |#
-(let ((units '(1 2 4 6 8 10)))
+(let ((units '(0.25 0.5 0.75 1.0)))
   (setup-function)
   (dotimes (param (length units))
     (setq *run-var* (elt units param))
     (dotimes (i 3)
       (setq *run-num* i)
-      (net-build (convert-data *nand*) *run-var* 1.0 5 20000 1000 t)
+      (writeToFile  ; only used for testing purposes
+            (format nil "output.csv")
+            (format nil "~%~%")) ;; add new line for new run
+      (net-build (convert-data *voting-records*) 15 *run-var* 2 5000 5 nil)
     )
   )
 )
