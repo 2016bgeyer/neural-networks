@@ -403,6 +403,17 @@ name)
 
 ;; IMPLEMENT THIS FUNCTION
 
+(defparameter *output-activation* #'sigmoid)
+(defparameter *hidden-activation* #'relu)
+(defparameter *run-num* 1)
+(defparameter *run-var* 0)
+
+(defun prop-layer (activation-function input weights &optional (bias 0))
+  "Does one layer of propogation by multiplying one layer of edge weights
+  by the input values with the sigmoid activation function"
+  (map-m activation-function (scalar-add bias (multiply weights input))) ;; after the multiplication, add the bias and run sigmoid
+)
+
 (defun forward-propagate (datum v w)
   "Returns as a vector the output of the OUTPUT units when presented
 the datum as input. The forward pass rules are (in this order):
@@ -422,16 +433,6 @@ o = sigmoid[w . h]"
         (prop-layer *output-activation* (prop-layer *hidden-activation* input v bias) w))) 	;; propagate the two layers i -> h -> o
 )
 
-(defparameter *output-activation* #'sigmoid)
-(defparameter *hidden-activation* #'relu)
-(defparameter *run-num* 1)
-(defparameter *run-var* 0)
-
-(defun prop-layer (activation-function input weights &optional (bias 0))
-  "Does one layer of propogation by multiplying one layer of edge weights
-  by the input values with the sigmoid activation function"
-  (map-m activation-function (scalar-add bias (multiply weights input))) ;; after the multiplication, add the bias and run sigmoid
-)
 
 
 ;; IMPLEMENT THIS FUNCTION
