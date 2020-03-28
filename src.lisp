@@ -402,6 +402,14 @@ name)
 ;; You can convert the raw data to this column-vector form using CONVERT-DATA
 
 ;; IMPLEMENT THIS FUNCTION
+(defparameter *output-activation* #'sigmoid)
+(defparameter *hidden-activation* #'relu)
+
+(defun prop-layer (activation-function input weights &optional (bias 0))
+  "Does one layer of propogation by multiplying one layer of edge weights
+  by the input values with the sigmoid activation function"
+  (map-m activation-function (scalar-add bias (multiply weights input))) ;; after the multiplication, add the bias and run sigmoid
+)
 
 (defun forward-propagate (datum v w)
   "Returns as a vector the output of the OUTPUT units when presented
@@ -421,15 +429,6 @@ o = sigmoid[w . h]"
         (debug-print "bias" bias)
         (prop-layer *output-activation* (prop-layer *hidden-activation* input v bias) w))) 	;; propagate the two layers i -> h -> o
 )
-
-(defparameter *output-activation* #'sigmoid)
-(defparameter *hidden-activation* #'relu)
-(defun prop-layer (activation-function input weights &optional (bias 0))
-  "Does one layer of propogation by multiplying one layer of edge weights
-  by the input values with the sigmoid activation function"
-  (map-m activation-function (scalar-add bias (multiply weights input))) ;; after the multiplication, add the bias and run sigmoid
-)
-
 
 ;; IMPLEMENT THIS FUNCTION
 
@@ -549,7 +548,9 @@ and the final W matrix of the learned network."
                   (optionally-print err print-all-errors)
                   (setf sum-error (+ sum-error err))								;; update sum-error for mean
                   (if (or (NULL max-error) (> err max-error)) (setf max-error err))))) ;; conditionally update max-error
-            (format t "~%Max Error: ~a~%Mean Error: ~a" max-error (float (/ sum-error (length shuffled-data))))))))
+            (format t "~%Max Error: ~a~%Mean Error: ~a" max-error (float (/ sum-error (length shuffled-data))))
+			;(writeToFile "output.csv" (float (/ sum-error (length shuffled-data))))
+			))))
     (list v w)) 	;; return network
 )
 
@@ -649,7 +650,7 @@ and use a modulo of MAX-ITERATIONS."
 
 (defun setup-function()
   (setq *output-activation* #'sigmoid)
-  (setq *hidden-activation* #'relu)
+  (setq *hidden-activation* #'sigmoid)
 )
 ;;;; Some useful preprocessing functions
 
