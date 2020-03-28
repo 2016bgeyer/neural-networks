@@ -1827,7 +1827,8 @@ can be fed into NET-LEARN.  Also adds a bias unit of 0.5 to the input."
 (simple-generalization *wine* ...)  ;; pick appropriate values
 
 |#
-(let ((units '(0.25 0.5 0.75 1.0)))
+;; (let ((units '(15)))
+(let ((units '(2 4 5 10 15 20)))
   (setup-function)
   (dotimes (param (length units))
     (setq *run-var* (elt units param))
@@ -1836,7 +1837,7 @@ can be fed into NET-LEARN.  Also adds a bias unit of 0.5 to the input."
       (writeToFile  ; only used for testing purposes
             (format nil "output.csv")
             (format nil "~%~%")) ;; add new line for new run
-      (net-build (convert-data *voting-records*) 15 *run-var* 2 5000 5 nil)
+      (net-build (convert-data (scale-data *mpg*)) *run-var* 1.0 2 3000 1 nil)
     )
   )
 )
