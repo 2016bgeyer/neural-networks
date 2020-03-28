@@ -344,6 +344,11 @@ pretty efficient.  Returns the shuffled version of the list."
   "Subtracts each element in the matrix from scalar, returning a new matrix"
   (map-m #'(lambda (elt) (- scalar elt)) matrix))
 
+;; function used for testing to create csv files
+(defun writeToFile (name content)
+  (with-open-file (stream  name :direction :output :if-exists :append :if-does-not-exist :create )
+  (format stream "~a~%" content))
+name)
 ;;; Functions you need to implement
 
 ;; IMPLEMENT THIS FUNCTION
