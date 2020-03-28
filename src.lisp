@@ -570,7 +570,7 @@ and the final W matrix of the learned network."
 of the data, then tests generalization on the second half, returning
 the average error among the samples in the second half.  Don't print any errors,
 and use a modulo of MAX-ITERATIONS."
-	
+  (setup-function)
   ;; split data in half (make sure data has the same dimensions its just n/2 samples of the data)
   (let* ((num-samples (length data))
          (converted-data (convert-data data))		;; convert the data to correct format + bias
@@ -619,6 +619,7 @@ and use a modulo of MAX-ITERATIONS."
   ;;  training-set = data minus test-set
   ;; 	train a network on training-set
   ;; 	test network on test-set
+  (setup-function)
   (let* ((num-samples (length data))				;; total number of samples
          (converted-data (convert-data data))		;; convert the data to correct format + bias
          (sum-error 0)							;; initialize sum-error
@@ -646,6 +647,10 @@ and use a modulo of MAX-ITERATIONS."
       mean-error))
 )
 
+(defun setup-function()
+  (setq *output-activation* #'sigmoid)
+  (setq *hidden-activation* #'relu)
+)
 ;;;; Some useful preprocessing functions
 
 (defun scale-list (lis)
