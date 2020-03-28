@@ -366,6 +366,11 @@ name)
   (cond ((<= u 0) 0) (T u))
 )
 
+(defun tanh-f (u)
+  "tanh function applied to number u"
+  (tanh u)
+)
+
 ;; output and correct-output are both column-vectors
 
 (defun net-error (output correct-output)
