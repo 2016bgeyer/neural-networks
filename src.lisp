@@ -424,6 +424,9 @@ o = sigmoid[w . h]"
 
 (defparameter *output-activation* #'sigmoid)
 (defparameter *hidden-activation* #'relu)
+(defparameter *run-num* 1)
+(defparameter *run-var* 0)
+
 (defun prop-layer (activation-function input weights &optional (bias 0))
   "Does one layer of propogation by multiplying one layer of edge weights
   by the input values with the sigmoid activation function"
@@ -540,16 +543,27 @@ and the final W matrix of the learned network."
           ;; if its a modulo iteration:
       (if (zerop (rem iteration modulo))
       ;; then print forward prop errors
-        (progn 
+        (let ((mean-error))
           (format t "~%------ Iteration ~a ------" iteration)
-            (loop for data-index from 0 to (- (length shuffled-data) 1) do (progn 	;; test on data set
-                (let* ((data-element (nth data-index shuffled-data))				;; get data element
-                       (outputs (forward-propagate data-element v w))					;; propagate and get output vector
-                       (err (net-error outputs (second data-element))))				;; get scalar error value
-                  (optionally-print err print-all-errors)
-                  (setf sum-error (+ sum-error err))								;; update sum-error for mean
-                  (if (or (NULL max-error) (> err max-error)) (setf max-error err))))) ;; conditionally update max-error
-            (format t "~%Max Error: ~a~%Mean Error: ~a" max-error (float (/ sum-error (length shuffled-data))))))))
+          (loop for data-index from 0 to (- (length shuffled-data) 1) do (progn 	;; test on data set
+              (let* ((data-element (nth data-index shuffled-data))				;; get data element
+                      (outputs (forward-propagate data-element v w))					;; propagate and get output vector
+                      (err (net-error outputs (second data-element))))				;; get scalar error value
+                (optionally-print err print-all-errors)
+                (setf sum-error (+ sum-error err))								;; update sum-error for mean
+                (if (or (NULL max-error) (> err max-error)) (setf max-error err))))) ;; conditionally update max-error
+          (writeToFile  ; only used for testing purposes
+            (format nil "max~a-~a.csv" 
+              *run-var*
+              *run-num*) 
+            (write-to-string max-error))
+          (setf mean-error (float (/ sum-error (length shuffled-data))))
+          (writeToFile  ; only used for testing purposes
+            (format nil "mean~a-~a.csv" 
+              *run-var*
+              *run-num*) 
+            (write-to-string mean-error))
+          (format t "~%Max Error: ~a~%Mean Error: ~a" max-error mean-error)))))
     (list v w)) 	;; return network
 )
 
@@ -649,7 +663,7 @@ and use a modulo of MAX-ITERATIONS."
 
 (defun setup-function()
   (setq *output-activation* #'sigmoid)
-  (setq *hidden-activation* #'relu)
+  (setq *hidden-activation* #'sigmoid)
 )
 ;;;; Some useful preprocessing functions
 
@@ -1798,6 +1812,8 @@ can be fed into NET-LEARN.  Also adds a bias unit of 0.5 to the input."
 
 ;;; you'll need to run this a couple of times before it globally converges.
 ;;; When it *doesn't* converge what is usually happening?
+
+;; (defun net-build (data num-hidden-units alpha initial-bounds max-iterations modulo &optional print-all-errors)
 (net-build (convert-data *nand*) 3 1.0 5 20000 1000 t)
 
 (net-build (convert-data *xor*) 3 1.0 5 20000 1000 t)
@@ -1817,3 +1833,13 @@ can be fed into NET-LEARN.  Also adds a bias unit of 0.5 to the input."
 (simple-generalization *wine* ...)  ;; pick appropriate values
 
 |#
+(let ((units '(1 2 4 6 8 10)))
+  (setup-function)
+  (dotimes (param (length units))
+    (setq *run-var* (elt units param))
+    (dotimes (i 3)
+      (setq *run-num* i)
+      (net-build (convert-data *nand*) *run-var* 1.0 5 20000 1000 t)
+    )
+  )
+)
